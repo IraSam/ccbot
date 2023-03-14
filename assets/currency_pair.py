@@ -1,5 +1,5 @@
 class CurrencyPair:
-    def __init__(self, base, quote, base_precision, quote_precision):
+    def __init__(self, base: str, quote: str, base_precision: int, quote_precision: int):
         self.base = base
         self.quote = quote
         self.base_precision = base_precision
