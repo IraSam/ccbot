@@ -10,7 +10,7 @@ from utils.logging_utils import logging_inputs_info
 
 
 class Binance(Exchange):
-    KLINES_COL_NAMES = ['open_timestamp', 'open', 'high', 'low', 'close', 'volume', '_', '_', '_', '_', '_', '_']
+    KLINES_COL_NAMES = ['timestamp', 'open', 'high', 'low', 'close', 'volume', '_', '_', '_', '_', '_', '_']
 
     def __init__(self, api_key: str, secret_key: str):
         self.api_key = api_key
@@ -35,16 +35,16 @@ class Binance(Exchange):
         pairs_universe = self.get_pairs_universe()
         universe = list()
 
-        for it, pair in enumerate(pairs_universe[:100]):
+        for it, pair in enumerate(pairs_universe[:10]):
             logging.info(f'Retrieving market data for {pair.symbol}. {it}/{len(pairs_universe)} ')
             kline_pairs = self.client.klines(pair.symbol, freq)
             logging.info(f'Retrieving market data for {pair.symbol} complete')
             pair_df = pd.DataFrame(kline_pairs, columns=self.KLINES_COL_NAMES)
             pair_df.drop('_', axis=1, inplace=True)
-            pair_df['symbol'] = pair.symbol
+            pair_df['symbol_id'] = pair.symbol
             universe.append(pair_df)
         logging.info('Concatenating across all currency pairs')
         universe_df = pd.concat(universe)
-        universe_df['open_time'] = pd.to_datetime(universe_df['open_timestamp'], unit='ms')
-        universe_df.drop('open_timestamp', axis=1, inplace=True)
+        universe_df['time'] = pd.to_datetime(universe_df['timestamp'], unit='ms').dt.strftime('%Y-%m-%d %H:%M:%S')
+        universe_df.drop('timestamp', axis=1, inplace=True)
         return universe_df

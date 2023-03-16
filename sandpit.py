@@ -1,17 +1,24 @@
-from binance.spot import Spot
-from datetime import datetime
-client = Spot()
+import logging
+import sys
 
-
+from database.mariadb_connector import MariaDB
+from database.table_register import TableNames
 from exchange.binance import Binance
+from utils.connection_info import get_connection_details
+
+root = logging.getLogger()
+root.setLevel(logging.INFO)
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+root.addHandler(handler)
 
 
 binance = Binance('zzz', 'zzz')
-pairs = binance.retrieve_market_data_all_universe()
+md_df = binance.retrieve_market_data_all_universe()
 
-
-# Get server timestamp
-print(client.exchange_info())
-server_time = datetime.fromtimestamp(client.time()['serverTime']/1000.0)
-# Get klines of BTCUSDT at 1m interval
-print(client.klines("BTCUSDT", "1m"))
+mkt_db_crd = get_connection_details('marketdb')
+mkt_db = MariaDB(mkt_db_crd['host'], int(mkt_db_crd['port']), mkt_db_crd['user'], mkt_db_crd['pwd'], mkt_db_crd['db'])
+mkt_db.insert_df_into_table(md_df, TableNames.market_data_5m)
+mkt_db.insert_market_data(md_df)
