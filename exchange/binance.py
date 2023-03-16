@@ -35,7 +35,7 @@ class Binance(Exchange):
         pairs_universe = self.get_pairs_universe()
         universe = list()
 
-        for it, pair in enumerate(pairs_universe[:1]):
+        for it, pair in enumerate(pairs_universe[:100]):
             logging.info(f'Retrieving market data for {pair.symbol}. {it}/{len(pairs_universe)} ')
             kline_pairs = self.client.klines(pair.symbol, freq)
             logging.info(f'Retrieving market data for {pair.symbol} complete')

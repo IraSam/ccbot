@@ -48,7 +48,8 @@ class MariaDB:
         symbol_dict = {x[1]: x[0] for x in response}
         market_data_df['symbol_id'] = market_data_df['symbol'].map(symbol_dict)
         market_data = market_data_df.values
-        query = 'INSERT INTO market_data (symbol_id, time, open, close, low, high, volume) VALUES (%s,%s,%s,%s,%s,%s,%s);'
+        query = f'INSERT INTO market_data (symbol_id, time, open, close, low, high, volume) VALUES (%s,%s,%s,%s,%s,%s,%s);'
+
         params = [(x[7], str(x[6]), x[0], x[1], x[2], x[3], x[4]) for x in market_data]
         self.__cursor.executemany(query, params)
         self.__conn.commit()
