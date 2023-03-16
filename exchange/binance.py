@@ -1,10 +1,12 @@
 import logging
+from typing import List
 
 import pandas as pd
 from binance.spot import Spot
 
 from assets.currency_pair import CurrencyPair
 from exchange.exchange import Exchange
+from utils.logging_utils import logging_inputs_info
 
 
 class Binance(Exchange):
@@ -14,23 +16,26 @@ class Binance(Exchange):
         self.api_key = api_key
         self.secret_key = secret_key
         self.client = Spot()
-        # a comment
 
-    def get_pairs_universe(self):
+    def __repr__(self):
+        return f'Binance Exchange connection with {self.api_key=}'
+
+    @logging_inputs_info
+    def get_pairs_universe(self) -> List[CurrencyPair]:
         logging.info('Retrieving exchange info')
         raw_data = self.client.exchange_info()
-        #logging.info(f'Received data back from exchange {raw_data}')
         pairs = [CurrencyPair(symbol['baseAsset'], symbol['quoteAsset'], symbol['baseAssetPrecision'],
                               symbol['quotePrecision'])
                  for symbol in raw_data['symbols'] if symbol['status'] == 'TRADING']
         logging.info(f'{len(pairs)} pairs in the universe')
         return pairs
 
-    def retrieve_market_data_all_universe(self, freq: str = '5m'):
+    @logging_inputs_info
+    def retrieve_market_data_all_universe(self, freq: str = '5m') -> pd.DataFrame:
         pairs_universe = self.get_pairs_universe()
         universe = list()
 
-        for it, pair in enumerate(pairs_universe[:10]):
+        for it, pair in enumerate(pairs_universe[:1]):
             logging.info(f'Retrieving market data for {pair.symbol}. {it}/{len(pairs_universe)} ')
             kline_pairs = self.client.klines(pair.symbol, freq)
             logging.info(f'Retrieving market data for {pair.symbol} complete')
@@ -41,4 +46,5 @@ class Binance(Exchange):
         logging.info('Concatenating across all currency pairs')
         universe_df = pd.concat(universe)
         universe_df['open_time'] = pd.to_datetime(universe_df['open_timestamp'], unit='ms')
+        universe_df.drop('open_timestamp', axis=1, inplace=True)
         return universe_df
