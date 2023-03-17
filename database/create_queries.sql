@@ -24,4 +24,22 @@ ENGINE=InnoDB
 ;
 
 
+CREATE TABLE `ref_currency4` (
+	`id` INT(11) NOT NULL AUTO_INCREMENT,
+	`symbol` VARCHAR(16) NOT NULL COLLATE 'utf8mb4_general_ci',
+	`prec` TINYINT(2) NULL DEFAULT NULL COMMENT 'Precision',
+	`is_stable_coin` BIT(1) NULL DEFAULT NULL,
+	`is_fiat` BIT(1) NULL DEFAULT NULL,
+	`start_timestamp` TIMESTAMP(6) GENERATED ALWAYS AS ROW START,
+   `end_timestamp` TIMESTAMP(6) GENERATED ALWAYS AS ROW END,
+   PERIOD FOR SYSTEM_TIME(start_timestamp, end_timestamp),
+	PRIMARY KEY (`id`) USING BTREE,
+	UNIQUE INDEX `symbol` (`symbol`) USING BTREE
+)
+COLLATE='utf8mb4_general_ci'
+ENGINE=INNODB
+WITH SYSTEM VERSIONING
+;
+
+
 

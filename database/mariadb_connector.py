@@ -1,6 +1,6 @@
 import logging
 import sys
-from typing import List, Any, Tuple
+from typing import List, Any, Tuple, Dict
 
 import mariadb
 import pandas as pd
@@ -10,13 +10,17 @@ from database.table_register import TableNames
 
 
 class MariaDBConnector:
+    NECESSARY_CONNECTION_KEYS = ['host', 'port', 'user', 'pwd', 'database']
 
-    def __init__(self, host: str, port: int, user: str, pwd: str, database: str):
-        self.__host = host
-        self.__port = port
-        self.__user = user
-        self.__pwd = pwd
-        self.__db = database
+    def __init__(self, name: str, connection_info: Dict[str, str]):
+        if not all([key in connection_info for key in ['host', 'port', 'user', 'pwd', 'database']]):
+            raise ConnectionError(f'lacking connection details for {name} - Environment variable for ')
+        self.__name = name
+        self.__host = connection_info['host']
+        self.__port = connection_info['port']
+        self.__user = connection_info['user']
+        self.__pwd = connection_info['pwd']
+        self.__db = connection_info['database']
         logging.info(f'Connecting to {self.__host} on {self.__port}, with user {self.__user} to database {self.__db}')
         try:
             self.__conn = mariadb.connect(
