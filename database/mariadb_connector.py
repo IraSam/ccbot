@@ -1,6 +1,6 @@
 import logging
 import sys
-from typing import  List, Any, Tuple
+from typing import List, Any, Tuple
 
 import mariadb
 import pandas as pd
@@ -9,7 +9,7 @@ from database.table_register import MARIADB_MANAGER
 from database.table_register import TableNames
 
 
-class MariaDB:
+class MariaDBConnector:
 
     def __init__(self, host: str, port: int, user: str, pwd: str, database: str):
         self.__host = host
@@ -38,17 +38,17 @@ class MariaDB:
         normalizing_details = MARIADB_MANAGER.normalizing_details(table_name)
         if normalizing_details:
             for (from_col, dest_table, dest_col) in normalizing_details:
-                self.insert_new_norm_keys(df, from_col, dest_table, dest_col)
-                df = self.normalize_df(df, from_col, dest_table)
+                self.__insert_new_norm_keys(df, from_col, dest_table, dest_col)
+                df = self.__normalize_df(df, from_col, dest_table)
         column_names = MARIADB_MANAGER.table_column_names(table_name)
         placeholders = '%s,' * len(column_names)
         query = f'INSERT INTO {table_name.name} ({",".join(column_names)}) VALUES ({placeholders[:-1]});'
-        data_list = self.build_data_list(df, list(df.columns), column_names)
+        data_list = self.__build_data_list(df, list(df.columns), column_names)
         self.__cursor.executemany(query, data_list)
         self.__conn.commit()
 
     @staticmethod
-    def build_data_list(df: pd.DataFrame, df_columns: List[str], table_columns: List[str]) -> List[Tuple[Any]]:
+    def __build_data_list(df: pd.DataFrame, df_columns: List[str], table_columns: List[str]) -> List[Tuple[Any]]:
         ret_val = list()
         df_list = df.values
         columns_map = {col: df_columns.index(col) for col in table_columns}
@@ -56,7 +56,7 @@ class MariaDB:
             ret_val.append(tuple([row[columns_map[col]] for col in table_columns]))
         return ret_val
 
-    def normalize_df(self, df: pd.DataFrame, from_col: str, dest_table: TableNames) -> pd.DataFrame:
+    def __normalize_df(self, df: pd.DataFrame, from_col: str, dest_table: TableNames) -> pd.DataFrame:
         logging.info(f'About to normalize df for column {from_col} before inserting to {dest_table}')
         query = f'Select * from {dest_table.name}'
         logging.info(f'Read query is {query}')
@@ -66,7 +66,7 @@ class MariaDB:
         df[from_col] = df[from_col].map(key_map)
         return df
 
-    def insert_new_norm_keys(self, df: pd.DataFrame, from_col: str, dest_table: TableNames, dest_col: str) -> int:
+    def __insert_new_norm_keys(self, df: pd.DataFrame, from_col: str, dest_table: TableNames, dest_col: str) -> int:
         if from_col not in df.columns:
             raise Exception(f'Expecting {from_col=} in dataframe as this column should be normalized')
         unique_keys = df[from_col].unique()
